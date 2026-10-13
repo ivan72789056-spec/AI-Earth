@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Earth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg1:#07142e;--bg2:#1a4a96;--ink:#ffffff;--muted:#bcd3f2;--line:#6fa3ee;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg1:#050f24;--bg2:#143a7a}}
+:root[data-theme="dark"]{--bg1:#050f24;--bg2:#143a7a}
+*{box-sizing:border-box}
+html{scroll-snap-type:y mandatory;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;color:var(--ink);background:linear-gradient(180deg,var(--bg1),var(--bg2)) fixed;background-color:var(--bg1);font-family:"Space Grotesk","Helvetica Neue",Arial,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.s{position:relative;height:100vh;height:100svh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;align-items:center;justify-content:flex-start;padding:0 8vw}
+.s:nth-of-type(even){justify-content:flex-end}
+.t{max-width:24rem}
+.t>*{opacity:0;transform:translateY(22px);transition:opacity .3s,transform .3s}
+.s.on .t>*{opacity:1;transform:none;transition:opacity .8s var(--d,0s),transform .8s var(--d,0s)}
+.t>:nth-child(2){--d:.12s}.t>:nth-child(3){--d:.26s}
+h1{font-size:clamp(4rem,11vw,8rem);font-weight:300;letter-spacing:-0.05em;line-height:1;margin:0 0 1.2rem}
+h2{font-size:clamp(2.2rem,4.5vw,3.2rem);font-weight:300;letter-spacing:-0.03em;line-height:1.05;margin:0 0 1.1rem}
+p{margin:0;color:var(--muted);font-size:1.05rem;line-height:1.6;max-width:36ch}
+.f{margin-top:1.4rem;padding-top:.9rem;border-top:1px solid var(--line);color:var(--ink);font-size:.95rem}
+nav{position:fixed;right:max(18px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px}
+nav button{width:9px;height:9px;padding:0;border-radius:50%;border:1px solid var(--muted);background:transparent;cursor:pointer}
+nav button.on{background:var(--ink);border-color:var(--ink)}
+nav button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (max-width:700px){
+  .s,.s:nth-of-type(even){justify-content:flex-start;align-items:flex-end;padding:0 18vw 7vh 7vw}
+}
+@media (prefers-reduced-motion: reduce){.t>*,.s.on .t>*{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<nav id="nav" aria-label="Sections"></nav>
+<section class="s"><div class="t"><h1>Earth</h1><p>A small blue planet, and the only place we know that is home to life. Scroll to take a closer look.</p><p class="f">Third planet from the Sun.</p></div></section>
+<section class="s"><div class="t"><h2>Water</h2><p>Oceans cover about 71% of the surface and hold 97% of all water. Seen from space, they give our planet its color.</p><p class="f">Average ocean depth: 3,700 m.</p></div></section>
+<section class="s"><div class="t"><h2>Air</h2><p>A thin atmosphere, only a few dozen kilometres deep, shields life from radiation and keeps the climate steady.</p><p class="f">Nitrogen 78%, oxygen 21%.</p></div></section>
+<section class="s"><div class="t"><h2>Land</h2><p>Seven continents rest on tectonic plates that drift a few centimetres every year, slowly reshaping the map.</p><p class="f">Highest peak: Everest, 8,849 m.</p></div></section>
+<section class="s"><div class="t"><h2>Life</h2><p>Millions of species live here, from microbes in deep rock to whales in open water. Life has been present for more than 3.5 billion years.</p><p class="f">About 8.7 million species, by one estimate.</p></div></section>
+<section class="s"><div class="t"><h2>Motion</h2><p>Earth spins once a day and travels around the Sun once a year, at roughly 30 km every second. Its tilt of 23.4 degrees gives us the seasons.</p><p class="f">Day: 24 hours. Year: 365.25 days.</p></div></section>
+<section class="s"><div class="t"><h2>Home</h2><p>4.5 billion years old. 12,742 km across. One moon, one home.</p><p class="f">Take care of it.</p></div></section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// контуры (lon,lat): материки, острова и внутренние моря
+var LAND=[
+[-168,66,-160,71,-140,70,-125,70,-95,72,-80,73,-62,66,-55,52,-60,47,-66,45,-70,42,-76,35,-81,31,-80,25,-83,29,-90,30,-97,27,-97,20,-91,19,-87,21,-88,16,-83,10,-77,8,-80,7,-86,11,-92,15,-105,20,-110,24,-112,30,-117,32,-124,40,-125,49,-135,58,-150,60,-165,60],
+[-73,78,-60,82,-30,83,-20,75,-22,70,-42,60,-52,65,-58,75],
+[-77,8,-72,12,-62,10,-52,5,-50,0,-35,-6,-39,-14,-41,-22,-48,-26,-58,-35,-57,-39,-65,-42,-66,-47,-69,-52,-68,-55,-74,-52,-74,-42,-72,-30,-70,-18,-76,-14,-81,-6,-80,0,-77,4],
+[-17,21,-10,30,-6,36,10,37,20,32,32,31,33,28,37,20,39,15,43,12,51,12,40,-2,40,-15,35,-24,32,-29,20,-35,18,-32,12,-17,9,-1,9,4,-8,4,-15,11,-17,15],
+[-9,37,-9,43,-1,46,-4,48,2,51,9,54,11,58,6,59,5,62,14,68,25,71,40,68,60,69,80,73,100,77,115,74,140,72,160,70,180,68,180,65,165,60,156,51,143,52,140,46,130,42,127,38,126,34,122,40,119,37,121,31,117,24,108,21,106,10,100,13,100,2,104,1,98,8,93,19,88,22,80,15,77,8,73,17,67,25,57,25,56,27,48,30,50,26,56,24,59,22,52,16,43,13,39,21,34,28,35,31,36,36,27,37,26,40,23,38,20,40,16,38,12,42,8,44,3,43,-2,37],
+[114,-22,122,-18,130,-12,137,-12,142,-11,146,-19,153,-26,150,-37,141,-38,131,-31,115,-34],
+[-5,50,-3,59,-6,58,-5,55,-3,54,1,53,1,51],[-10,52,-6,55,-6,52],[-24,64,-14,66,-14,64],
+[130,31,131,34,136,35,140,36,142,40,141,45,144,43,140,38,135,33],
+[44,-25,47,-25,50,-15,49,-12,44,-17],[95,5,98,4,106,-3,104,-6,98,-1],[109,2,117,7,119,1,116,-4,110,-3],
+[105,-6,114,-7,114,-8.5,106,-7.5],[131,-1,141,-3,150,-10,141,-9,137,-5],
+[172,-34,178,-38,175,-41,172,-41],[167,-46,174,-41,171,-45],[-85,22,-74,20,-77,22],[120,18,122,18,126,7,122,7]
+];
+var SEA=[
+[-95,60,-94,57,-85,55,-80,52,-79,57,-77,62,-82,64,-90,64],
+[28,41,28,45,34,46,41,45,41,41,36,41.5],[47,45,53,47,54,40,50,37,49,40],[10,54,20,55,24,59,30,60,22,63,18,60]
+];
+function inside(p,lo,la){var c=false,n=p.length/2,i,j=n-1;
+  for(i=0;i<n;i++){var xi=p[2*i],yi=p[2*i+1],xj=p[2*j],yj=p[2*j+1];
+    if((yi>la)!==(yj>la)&&lo<(xj-xi)*(la-yi)/(yj-yi)+xi)c=!c;j=i;}
+  return c;}
+function anyIn(list,lo,la){for(var k=0;k<list.length;k++)if(inside(list[k],lo,la))return true;return false;}
+
+var canvas=document.getElementById('c');
+var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+var scene=new THREE.Scene();
+var camera=new THREE.PerspectiveCamera(35,1,0.1,100);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6f86b3,0.85));
+var sun=new THREE.DirectionalLight(0xffffff,0.75);
+sun.position.set(-3,3,5);scene.add(sun);
+
+// звёзды позади планеты
+function stars(n,size,op){
+  var a=[],i;
+  for(i=0;i<n;i++){var u=Math.random()*2-1,t=Math.random()*6.2832,r=Math.sqrt(1-u*u);a.push(40*r*Math.cos(t),40*u,40*r*Math.sin(t));}
+  var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a,3));
+  var p=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:size,sizeAttenuation:false,transparent:true,opacity:op}));
+  scene.add(p);return p;
+}
+var starsA=stars(900,1.5,0.75),starsB=stars(80,2.6,0.95);
+
+// планета: грани раскрашены по карте
+var geo=new THREE.IcosahedronGeometry(1,9);
+if(geo.index)geo=geo.toNonIndexed();
+var pos=geo.attributes.position,cols=[],i,k;
+var OCEAN=[0x2a4fd0,0x2547c4,0x2f56d8],LAND_C=[0x3fae3f,0x35a035,0x4bbb48],ICE=0xf4f8ff;
+for(i=0;i<pos.count;i+=3){
+  var cx=(pos.getX(i)+pos.getX(i+1)+pos.getX(i+2))/3,cy=(pos.getY(i)+pos.getY(i+1)+pos.getY(i+2))/3,cz=(pos.getZ(i)+pos.getZ(i+1)+pos.getZ(i+2))/3;
+  var r=Math.sqrt(cx*cx+cy*cy+cz*cz);
+  var la=Math.asin(cy/r)*57.2958,lo=Math.atan2(cx,cz)*57.2958,h=Math.abs(Math.sin(i*12.9898)*43758.5453)%1,hex;
+  if(la>79||la<-68)hex=ICE;
+  else hex=(anyIn(LAND,lo,la)&&!anyIn(SEA,lo,la))?LAND_C[Math.floor(h*3)]:OCEAN[Math.floor(h*3)];
+  var c=new THREE.Color(hex);
+  for(k=0;k<3;k++)cols.push(c.r,c.g,c.b);
+}
+geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+var globe=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,flatShading:true,shininess:6,specular:0x223355}));
+var tilt=new THREE.Group();
+tilt.rotation.set(0.38,0,-0.2);
+tilt.add(globe);scene.add(tilt);
+
+function resize(){
+  var w=innerWidth,h=innerHeight,portrait=w/h<0.9;
+  renderer.setSize(w,h,false);camera.aspect=w/h;
+  camera.position.set(0,0,portrait?7.4:6.4);
+  tilt.position.y=portrait?0.95:0;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);resize();
+
+// секции: один жест прокрутки = один блок текста = пол-оборота Земли (всего 3 оборота)
+var secs=[].slice.call(document.querySelectorAll('.s')),nav=document.getElementById('nav'),dots=[],active=-1;
+secs.forEach(function(s,n){
+  var b=document.createElement('button');b.setAttribute('aria-label','Section '+(n+1));
+  b.onclick=function(){s.scrollIntoView({behavior:'smooth'});};
+  nav.appendChild(b);dots.push(b);
+});
+var cur=0,START=1.4;
+function loop(){
+  requestAnimationFrame(loop);
+  var max=document.documentElement.scrollHeight-innerHeight;
+  var target=max>0?Math.min(1,Math.max(0,scrollY/max)):0;
+  cur+=(target-cur)*0.1;
+  globe.rotation.y=START+cur*3*Math.PI*2;
+  starsA.rotation.y=starsB.rotation.y=cur*0.6;
+  var idx=Math.round(target*(secs.length-1));
+  if(idx!==active){
+    active=idx;
+    secs.forEach(function(s,n){s.classList.toggle('on',n===idx);dots[n].classList.toggle('on',n===idx);});
+  }
+  renderer.render(scene,camera);
+}
+loop();
+</script>
+</body>
+</html>
